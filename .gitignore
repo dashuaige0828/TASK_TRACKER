@@ -1,0 +1,20 @@
+# Node / Angular (Frontend)
+**/node_modules/
+**/dist/
+**/.angular/
+
+# Java / Spring Boot (Backend)
+**/target/
+**/.settings/
+**/.classpath
+**/.project
+
+# Entorno y Archivos de Sistema
+*.log
+.DS_Store
+Thumbs.db
+
+# Configuraciones de IDEs
+**/.idea/
+**/.vscode/
+*.iml
