@@ -13,6 +13,8 @@ export class TaskComponent {
   tasks = signal<Task[]>([]);
   nuevoTitulo = signal('');
   mensaje = signal('');
+  idEditando = signal<number | null>(null);   
+  tituloEditando = signal(''); 
 
   constructor() {
     this.cargar();
@@ -21,6 +23,11 @@ export class TaskComponent {
   alEscribir(evento: Event) {
     const input = evento.target as HTMLInputElement;
     this.nuevoTitulo.set(input.value);
+  }
+
+  alEscribirEdicion(evento: Event) {
+    const input = evento.target as HTMLInputElement;
+    this.tituloEditando.set(input.value);
   }
 
   cargar() {

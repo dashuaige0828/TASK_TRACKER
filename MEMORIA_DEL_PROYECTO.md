@@ -20,6 +20,7 @@
 |---|---|---|
 | Java (JDK) | **17.0.20+8 Temurin** | `C:\Users\27944\.jdks\jdk-17.0.20+8` |
 | Spring Boot | **4.1.0** (Maven Wrapper incluido) | `BACKEND/` |
+| Swagger / OpenAPI | **springdoc-openapi 3.1.1** (⚠️ la 2.x es para Boot 3 — ver peculiaridad #13) | `BACKEND/pom.xml` |
 | Base de datos | **H2** en memoria (`jdbc:h2:mem:taskdb`) | — |
 | Node.js | **24.16.0** | `F:\NODEJS\` |
 | npm | **11.13.0** | — |
@@ -60,7 +61,8 @@ F:\TASK_TRACKER\
 │   ├── estado-servidores.js  (¿están activos backend y frontend?)
 │   ├── test-api.js           (prueba las 10 operaciones de la API)
 │   ├── verificar-frontend.js (comprueba el frontend + crea tareas de ejemplo)
-│   └── diagnostico.js        (diagnostica backend, CORS y puertos)
+│   ├── diagnostico.js        (diagnostica backend, CORS y puertos)
+│   └── diagnostico-swagger.js (comprueba Swagger + prueba POST con/sin título)
 └── MEMORIA_DEL_PROYECTO.md   → este archivo
 ```
 
@@ -101,29 +103,51 @@ F:\TASK_TRACKER\
     ```
     **Cómo comprobarlo**: `curl.exe -s -D - -o NUL -H "Origin: http://localhost:4200" http://localhost:8080/api/tasks` → debe aparecer `Access-Control-Allow-Origin: http://localhost:4200`.
 11. **Usar `http://localhost:4200` (no `127.0.0.1`)** en el navegador: la config CORS permite exactamente el origen `localhost:4200`; con `127.0.0.1` se bloquea igual.
+12. **Git: `git add` NO es `git commit`** (confusión que tuvo el usuario). `add` solo pone los archivos en la **bandeja de espera (staging)**; hasta que no se hace `commit`, no se guardan en el historial, y `push` no sube nada. Las 4 zonas: *directorio de trabajo* → (`git add`) → *staging* → (`git commit`) → *repo local* → (`git push`) → *GitHub*. Comprobar con `git log --oneline` y `git ls-tree origin/main --name-only`.
+13. **Swagger en Spring Boot 4 → springdoc 3.x**: la línea **2.x es para Spring Boot 3**; para Boot 4 hay que usar **3.x** (probado: `3.1.1`). Dependencia:
+    ```xml
+    <dependency>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        <version>3.1.1</version>
+    </dependency>
+    ```
+    URLs: **`http://localhost:8080/swagger-ui.html`** (redirige a `/swagger-ui/index.html`) y el JSON en `/v3/api-docs`.
+    **En Swagger hay que pulsar "Try it out" antes de poder editar el cuerpo JSON.**
+14. **Validación con `@Valid` (ARREGLADO y verificado)**: antes, POST sin `title` devolvía **HTTP 500** (`NullPointerException` en `task.getTitle().trim()`). Arreglado usando el `spring-boot-starter-validation` (ya estaba en el pom): `@NotBlank(message = "...")` + `@Size(max = 200)` en `Task.title` y `@Valid` en los `@RequestBody` de POST y PUT.
+    - Verificado con `tools/test-validacion.js` → **5/5 OK**: sin title → 400 · `""` → 400 · `"   "` → 400 · válido → 201 · 250 chars → 400
+    - ⚠️ **Nota**: el mensaje del 400 que devuelve Spring es feo y técnico (*"Validation failed for object='task'. Error count: 1"*) y **no muestra el mensaje de `@NotBlank`**. El arreglo profesional sería un `@RestControllerAdvice` (el usuario decidió dejarlo para más adelante).
+    - Regla: `@NotBlank` rechaza `null`, `""` **y** espacios; `@NotEmpty` solo `null`/`""`; `@NotNull` solo `null`.
 
 ---
 
-## 📋 ESTADO ACTUAL (actualizado: 2026-10-08, sesión 5)
+## 📋 ESTADO ACTUAL (actualizado: 2026-10-08, sesión 6)
 
 **IMPORTANTE:** el usuario **escribe el código él mismo** (es su práctica). El agente solo guía y configura el entorno.
 
-### 🎉 LA APLICACIÓN FUNCIONA COMPLETA (backend + frontend + BD)
+### 🎉 LA APLICACIÓN FUNCIONA COMPLETA (backend + frontend + BD + Swagger)
 
 - [x] **Backend COMPLETO y PROBADO** ✅:
-  - Probado con Postman (sesión 3) y con `tools/test-api.js` (sesión 5): **10/10 pruebas OK**
+  - Probado con Postman (sesión 3), `tools/test-api.js` (sesión 5) y `tools/test-validacion.js` (sesión 6): **10/10 + 5/5 pruebas OK**
   - CRUD completo: GET/GET id → 200 · POST → 201 · **duplicado → 409 con mensaje** · PUT → 200 · DELETE → 204 · inexistente → 404
   - `trim()` + `IgnoreCase` verificados
+  - **Validación arreglada** ✅ (`@NotBlank` + `@Valid`): POST inválido → **400** (antes 500). Ver peculiaridad #14
   - **CORS arreglado** con `config/CorsConfig.java` (ver peculiaridad #10) — el navegador ya recibe `Access-Control-Allow-Origin` ✅
 - [x] **Frontend COMPLETO y FUNCIONANDO** ✅: lista, crear, borrar y mensaje de error del 409 en pantalla
 - [x] **Integración verificada de punta a punta** (2026-10-08): `curl` confirma la cabecera CORS y el usuario ve las tareas en `http://localhost:4200` ✅
+- [x] **Swagger funcionando** ✅ (springdoc 3.1.1): los 5 endpoints documentados en `http://localhost:8080/swagger-ui.html`
 - [x] **Servidores**: los arranca el usuario (IntelliJ ▶ para backend, `ng serve` en VS Code para frontend)
-- [ ] **Falta commitear y pushear TODO lo nuevo** ⚠️ (último commit: `b62c8e8`, solo backend):
-  - El frontend completo (parcialmente `git add`-eado)
-  - `config/CorsConfig.java`, el fix de `application.properties` y `task.component.*`
-  - Los scripts de `tools/` (`test-api.js`, `estado-servidores.js`, `verificar-frontend.js`, `diagnostico.js`) y esta memoria
+- [x] **Editar tareas — A MEDIAS** ⏳: el usuario ya añadió a `task.component.ts` los signals `idEditando = signal<number | null>(null)` y `tituloEditando = signal('')`, y el método `alEscribirEdicion(evento)`
+  - ⏳ **FALTA (lo siguiente que debe escribir)**:
+    1. Métodos `empezarEdicion(tarea)`, `cancelarEdicion()` y `guardarEdicion(tarea)` en `task.component.ts` (instrucciones ya entregadas: usan `...tarea, title: titulo` y `lista.map()`)
+    2. Actualizar `task.component.html`: `@if (idEditando() === tarea.id)` dentro del `@for` para alternar input/texto + botones ✏️/💾/✖
+    3. Probar con `ng build` y en el navegador
+  - *El backend NO necesita cambios: el `PUT /api/tasks/{id}` y `actualizar()` del service ya existían*
+- [ ] **Git: hay cambios SIN commitear** ⚠️ (último commit: `a498e7e`):
+  - `BACKEND/pom.xml` (Swagger), `Task.java` + `TaskController.java` (validación), esta memoria
+  - `tools/diagnostico-swagger.js` y `tools/test-validacion.js`
 
-### 🛠️ Herramientas de diagnóstico creadas (sesión 5)
+### 🛠️ Herramientas de diagnóstico creadas
 
 | Comando (desde `F:\TASK_TRACKER`) | Qué hace |
 |---|---|
@@ -131,6 +155,8 @@ F:\TASK_TRACKER\
 | `node tools\test-api.js` | Prueba las 10 operaciones de la API |
 | `node tools\verificar-frontend.js` | Comprueba el frontend y crea 2 tareas de ejemplo |
 | `node tools\diagnostico.js` | Diagnostica backend, CORS y puerto del frontend |
+| `node tools\diagnostico-swagger.js` | Comprueba Swagger, prueba POST con y sin título, lista endpoints detectados |
+| `node tools\test-validacion.js` | Verifica la validación del título (400 vs 201, 5 casos) |
 
 ---
 
@@ -147,6 +173,8 @@ ng serve
 ```
 
 - API: `http://localhost:8080/api/tasks`
+- **Swagger UI: `http://localhost:8080/swagger-ui.html`** (⚠️ pulsar "Try it out" antes de editar el JSON)
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 - Consola H2: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:taskdb`, user: `sa`, sin password)
 - UI: `http://localhost:4200`
 
@@ -154,28 +182,36 @@ ng serve
 
 ## 🎯 PRÓXIMOS PASOS (los escribe/ejecuta el usuario, en este orden)
 
-1. **Probar la integración (¡lo primero!)**:
-   - Terminal 1: backend → `cd F:\TASK_TRACKER\BACKEND` + `.\mvnw.cmd spring-boot:run` (o ▶ en IntelliJ)
-   - Terminal 2: frontend → `cd F:\TASK_TRACKER\FRONTEND` + `ng serve`
-   - Abrir `http://localhost:4200` → crear tarea ✅ → repetir título → ver el **409 en pantalla** 🎯 → borrar con 🗑️
-   - Extra: mirar la consola de IntelliJ para ver el **SQL de Hibernate en vivo**
-2. **Commit y push del frontend** (⚠️ pendiente):
-   ```powershell
-   cd F:\TASK_TRACKER
-   git add -A
-   git commit -m "feat: frontend Angular con lista y formulario de tareas"
-   git push origin main
-   ```
-3. **Opcional — siguientes prácticas**:
-   - Editar tareas (ya existe `actualizar()` en el service, falta usarlo en la UI)
-   - Campo `status` en Task (enum PENDIENTE/EN_PROGRESO/COMPLETADA) + endpoint `POST /api/tasks/{id}/completar`
-   - Swagger (springdoc-openapi — buscar versión compatible con Spring Boot 4.1)
-   - Dockerfile para el backend (práctica de Docker)
-   - Librería de UI (Angular Material o PrimeNG) para botones/tablas bonitas
+**Estado de partida:** la app funciona completa, con Swagger, y (casi) todo en GitHub. Ahora toca **añadir funcionalidades** (el usuario escribe el código, el agente guía).
+
+0. **✅ HECHO — Arreglar el bug de validación**: `@NotBlank` + `@Size` en `Task.title` y `@Valid` en `TaskController` → POST inválido devuelve **400** (verificado 5/5 con `tools/test-validacion.js`). Queda **opcional** un `@RestControllerAdvice` para que el 400 devuelva un mensaje limpio (el usuario lo dejó para más adelante).
+1. **⭐ EN CURSO — Editar tareas** (ver estado detallado arriba en "ESTADO ACTUAL"):
+   - ✅ Hecho por el usuario: signals `idEditando` / `tituloEditando` + `alEscribirEdicion()`
+   - ⏳ Falta: `empezarEdicion()` / `cancelarEdicion()` / `guardarEdicion()` (con `{ ...tarea, title: titulo }` y `lista.map()`) + el `@if (idEditando() === tarea.id)` en el HTML con botones ✏️/💾/✖
+   - Endpoint y service ya existen: `PUT /api/tasks/{id}` y `TaskService.actualizar()`
+2. **Campo `status` en Task** (feature completa backend + frontend): enum `TaskStatus` (PENDIENTE/EN_PROGRESO/COMPLETADA), campo en la entidad, validación, y en Angular: selector, colores y filtros.
+3. **Acción de negocio** `POST /api/tasks/{id}/completar` (ejemplo de "verbo en la URL").
+4. **Docker**: Dockerfile para el backend (práctica de Docker, muy pedido en ofertas).
+5. **Librería de UI**: Angular Material o PrimeNG para botones/tablas.
+
+**Recordatorio de flujo de trabajo en cada sesión:**
+- Guardar los archivos (`Ctrl+S`) → el agente lee el disco
+- Commit al terminar cada hito: `git add -A` → `git commit -m "..."` → `git push origin main`
+- Al terminar, pedir: *"actualiza la memoria"*
 
 ---
 
 ## 📜 HISTORIAL DE SESIONES
+
+### Sesión 6 — 2026-10-08 (continuación del mismo día)
+- **Swagger añadido al backend** por el usuario: `springdoc-openapi-starter-webmvc-ui` **3.1.1**
+  - Averiguado revisando Maven Central: la línea **2.x es para Spring Boot 3**; para Boot 4 hay que usar **3.x** (se confirmó viendo que el POM de springdoc 3.1.1 usa los módulos nuevos de Boot 4: `spring-boot-tomcat`, `spring-boot-health`, `spring-boot-starter-webmvc-test`)
+  - Verificado: `/swagger-ui.html` → 302, `/v3/api-docs` → 200, y los **5 endpoints detectados** correctamente
+- **🐛 BUG ENCONTRADO en la API** (el usuario no podía crear tareas desde Swagger y el agente lo reprodujo): POST sin `title` → **HTTP 500** `NullPointerException` en `task.getTitle().trim()`. Debería ser **400 Bad Request**.
+  - Causa: `spring-boot-starter-validation` está en el pom pero **no se usa** — falta `@NotBlank` en la entidad y `@Valid` en el controller
+  - Queda como próximo paso nº0 (muy didáctico: validación declarativa)
+- Creado `tools/diagnostico-swagger.js`
+- **Pendiente**: commitear (pom con Swagger + memoria + script) y arreglar el bug de validación
 
 ### Sesión 5 — 2026-10-08
 - **Prueba de integración completa**: el agente arrancó backend + frontend y ejecutó `tools/test-api.js` → **10/10 pruebas OK** (201, 409 con mensaje, 204, 404, trim+IgnoreCase)
@@ -187,7 +223,8 @@ ng serve
   - Verificado: ahora llega `Access-Control-Allow-Origin: http://localhost:4200` ✅
 - Explicado: cómo crear un paquete/clase nuevo en IntelliJ (`New → Java Class` con nombre `config.CorsConfig`), la regla carpeta ↔ package
 - Creados 4 scripts de diagnóstico en `tools/`
-- **Pendiente**: commit y push de todo lo nuevo (frontend + CORS + tools)
+- **Lección de git**: el usuario creía que el frontend ya estaba subido porque había hecho `git add` antes. Se le explicó que **`add` solo prepara (staging)** y que sin `commit` no hay nada que `push`ear. Comprobado con `git ls-tree origin/main --name-only` (no aparecía `FRONTEND`).
+- ✅ **Commit `a498e7e` hecho y pusheado** por el usuario: *"feat: frontend Angular funcional + fix CORS de Spring Boot 4 + scripts de diagnostico"*. `origin/main` ya contiene `FRONTEND/`; árbol de trabajo limpio
 
 ### Sesión 4 — 2026-10-06
 - El usuario terminó **todo el frontend Angular** (model, service, componente, HTML, config, conexión con `app-root`)

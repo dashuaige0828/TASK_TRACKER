@@ -5,6 +5,7 @@ import com.tasktracker.backend.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class TaskController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Task crear(@RequestBody Task task) {
+    public Task crear(@Valid @RequestBody Task task) {
         return taskService.crearTarea(task);
     }
 
