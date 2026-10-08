@@ -1,6 +1,8 @@
 package com.tasktracker.backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Task {
@@ -10,7 +12,9 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank(message = "El título es obligatorio")
+    @Size(max = 200, message = "Máximo 200 caracteres")
+    @Column(nullable = false, length = 200)
     private String title;
 
     @Column
