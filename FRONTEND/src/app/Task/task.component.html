@@ -1,0 +1,26 @@
+<h2>📋 Mis Tareas</h2>
+
+<div>
+  <input
+    [value]="nuevoTitulo()"
+    (input)="alEscribir($event)"
+    placeholder="Nueva tarea..."
+    (keyup.enter)="crear()"
+  />
+  <button (click)="crear()">Agregar</button>
+</div>
+
+@if (mensaje()) {
+  <p class="mensaje">{{ mensaje() }}</p>
+}
+
+<ul>
+  @for (tarea of tasks(); track tarea.id) {
+    <li>
+      {{ tarea.title }}
+      <button (click)="eliminar(tarea.id!)">🗑️</button>
+    </li>
+  } @empty {
+    <li>No hay tareas aún</li>
+  }
+</ul>
