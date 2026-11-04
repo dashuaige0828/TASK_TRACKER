@@ -17,8 +17,24 @@
 <ul>
   @for (tarea of tasks(); track tarea.id) {
     <li>
-      {{ tarea.title }}
-      <button (click)="eliminar(tarea.id!)">🗑️</button>
+      @if (idEditando() === tarea.id) {
+
+        <input
+          [value]="tituloEditando()"
+          (input)="alEscribirEdicion($event)"
+          (keyup.enter)="guardarEdicion(tarea)"
+          (keyup.escape)="cancelarEdicion()"
+        />
+        <button (click)="guardarEdicion(tarea)">💾</button>
+        <button (click)="cancelarEdicion()">✖</button>
+
+      } @else {
+
+        {{ tarea.title }}
+        <button (click)="empezarEdicion(tarea)">✏️</button>
+        <button (click)="eliminar(tarea.id!)">🗑️</button>
+
+      }
     </li>
   } @empty {
     <li>No hay tareas aún</li>
