@@ -37,6 +37,32 @@ export class TaskComponent {
     });
   }
 
+  empezarEdicion(tarea: Task) {
+    this.idEditando.set(tarea.id!);
+    this.tituloEditando.set(tarea.title);
+    this.mensaje.set('');
+  }
+
+  cancelarEdicion() {
+    this.idEditando.set(null);
+    this.tituloEditando.set('');
+  }
+
+  guardarEdicion(tarea: Task) {
+    const titulo = this.tituloEditando().trim();
+    if (!titulo) return;
+    this.mensaje.set('');
+    this.taskService.actualizar(tarea.id!, { ...tarea, title: titulo }).subscribe({
+      next: (actualizada) => {
+        this.tasks.update((lista) =>
+          lista.map((t) => (t.id === actualizada.id ? actualizada : t))
+        );
+        this.cancelarEdicion();
+      },
+      error: (e) => this.mensaje.set(e.error?.message ?? 'Error al actualizar'),
+    });
+  }
+
   crear() {
     const titulo = this.nuevoTitulo().trim();
     if (!titulo) return;

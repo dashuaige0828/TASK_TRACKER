@@ -118,6 +118,8 @@ F:\TASK_TRACKER\
     - Verificado con `tools/test-validacion.js` → **5/5 OK**: sin title → 400 · `""` → 400 · `"   "` → 400 · válido → 201 · 250 chars → 400
     - ⚠️ **Nota**: el mensaje del 400 que devuelve Spring es feo y técnico (*"Validation failed for object='task'. Error count: 1"*) y **no muestra el mensaje de `@NotBlank`**. El arreglo profesional sería un `@RestControllerAdvice` (el usuario decidió dejarlo para más adelante).
     - Regla: `@NotBlank` rechaza `null`, `""` **y** espacios; `@NotEmpty` solo `null`/`""`; `@NotNull` solo `null`.
+15. **Sandbox de archivos puede estar caído en este host**: a veces cualquier comando PowerShell falla con *"sandbox mode workspace-write is requested but no sandbox backend is usable on this host... --temp is not an existing directory"*. Es un fallo del entorno, **no del proyecto**: la solución es ejecutar el comando con `danger-full-access` (el propio error lo indica). Las herramientas de archivo (leer/editar) siguen funcionando.
+16. **Librerías verificadas compatibles con Angular 22** (comprobado con `npm view <pkg> peerDependencies`, 2026-10-08): **FullCalendar 7.1.3** (peer `@angular/core: 16 - 22`, requiere `temporal-polyfill`) · **PrimeNG 22.1.2** · **Angular Material 22.2.3**. ⚠️ Antes de instalar cualquier librería, verificar su `peerDependencies` contra Angular 22 (misma lección que con springdoc 2.x/3.x en Boot 4).
 
 ---
 
@@ -137,15 +139,18 @@ F:\TASK_TRACKER\
 - [x] **Integración verificada de punta a punta** (2026-10-08): `curl` confirma la cabecera CORS y el usuario ve las tareas en `http://localhost:4200` ✅
 - [x] **Swagger funcionando** ✅ (springdoc 3.1.1): los 5 endpoints documentados en `http://localhost:8080/swagger-ui.html`
 - [x] **Servidores**: los arranca el usuario (IntelliJ ▶ para backend, `ng serve` en VS Code para frontend)
-- [x] **Editar tareas — A MEDIAS** ⏳: el usuario ya añadió a `task.component.ts` los signals `idEditando = signal<number | null>(null)` y `tituloEditando = signal('')`, y el método `alEscribirEdicion(evento)`
-  - ⏳ **FALTA (lo siguiente que debe escribir)**:
-    1. Métodos `empezarEdicion(tarea)`, `cancelarEdicion()` y `guardarEdicion(tarea)` en `task.component.ts` (instrucciones ya entregadas: usan `...tarea, title: titulo` y `lista.map()`)
-    2. Actualizar `task.component.html`: `@if (idEditando() === tarea.id)` dentro del `@for` para alternar input/texto + botones ✏️/💾/✖
-    3. Probar con `ng build` y en el navegador
-  - *El backend NO necesita cambios: el `PUT /api/tasks/{id}` y `actualizar()` del service ya existían*
-- [ ] **Git: hay cambios SIN commitear** ⚠️ (último commit: `a498e7e`):
-  - `BACKEND/pom.xml` (Swagger), `Task.java` + `TaskController.java` (validación), esta memoria
-  - `tools/diagnostico-swagger.js` y `tools/test-validacion.js`
+- [x] **Editar tareas — COMPLETADO y PROBADO** ✅: el usuario escribió los signals `idEditando`/`tituloEditando`, `alEscribirEdicion()`, `empezarEdicion()`, `cancelarEdicion()`, `guardarEdicion()` (con `{ ...tarea, title: titulo }` y `lista.map()`) y el HTML con `@if (idEditando() === tarea.id)` + botones ✏️/💾/✖. **El usuario lo probó en el navegador: "todo funciona bien"** ✅
+- [ ] **🚧 EN CURSO — CALENDARIO tipo Google Calendar** (nueva feature pedida por el usuario):
+  - **Decisiones tomadas**: usar una **librería de calendario** (no construirla a mano) + **calendario arriba y lista del día seleccionado debajo**
+  - **Compatibilidad verificada con npm** (Angular 22): **FullCalendar 7.1.3** (peer: Angular 16-22) ← *recomendada por el agente* · **PrimeNG 22.1.2** · **Angular Material 22.2.3**
+  - **FASE 1 (backend) — instrucciones YA ENTREGADAS, pendiente de que el usuario lo escriba**:
+    1. `model/Task.java`: añadir `@NotNull` + `@Column(nullable=false)` + `private LocalDate dueDate;` + getter/setter (import `java.time.LocalDate`)
+    2. `repository/TaskRepository.java`: `List<Task> findByDueDateOrderByIdAsc(LocalDate dueDate);`
+    3. `TaskController.listar()`: `@RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE) LocalDate fecha` → y `TaskService.listarTareas(LocalDate fecha)` con `if (fecha == null) findAll() else findByDueDateOrderByIdAsc(fecha)`
+    - Resultado buscado: `GET /api/tasks?fecha=2026-10-15` → solo las tareas de ese día
+  - **FASE 2 (frontend)**: instalar FullCalendar + componente de calendario (eventos = tareas, `dateClick` → seleccionar día → lista + formulario de alta de ese día)
+  - ⚠️ **Aviso**: al hacer `dueDate` obligatorio, los POST sin fecha darán **400** → hay que **actualizar `tools/test-api.js` y `tools/test-validacion.js`** para incluir `"dueDate"` (lo hará el agente)
+- [ ] **Git: cambios SIN commitear** ⚠️ (último commit: `06476ed`): `task.component.ts` + `task.component.html` (edición de tareas), esta memoria y 2 líneas de la sesión anterior
 
 ### 🛠️ Herramientas de diagnóstico creadas
 
@@ -182,17 +187,18 @@ ng serve
 
 ## 🎯 PRÓXIMOS PASOS (los escribe/ejecuta el usuario, en este orden)
 
-**Estado de partida:** la app funciona completa, con Swagger, y (casi) todo en GitHub. Ahora toca **añadir funcionalidades** (el usuario escribe el código, el agente guía).
+**Estado de partida:** la app funciona completa (CRUD + edición + Swagger). Ahora la feature en curso es el **calendario**.
 
-0. **✅ HECHO — Arreglar el bug de validación**: `@NotBlank` + `@Size` en `Task.title` y `@Valid` en `TaskController` → POST inválido devuelve **400** (verificado 5/5 con `tools/test-validacion.js`). Queda **opcional** un `@RestControllerAdvice` para que el 400 devuelva un mensaje limpio (el usuario lo dejó para más adelante).
-1. **⭐ EN CURSO — Editar tareas** (ver estado detallado arriba en "ESTADO ACTUAL"):
-   - ✅ Hecho por el usuario: signals `idEditando` / `tituloEditando` + `alEscribirEdicion()`
-   - ⏳ Falta: `empezarEdicion()` / `cancelarEdicion()` / `guardarEdicion()` (con `{ ...tarea, title: titulo }` y `lista.map()`) + el `@if (idEditando() === tarea.id)` en el HTML con botones ✏️/💾/✖
-   - Endpoint y service ya existen: `PUT /api/tasks/{id}` y `TaskService.actualizar()`
-2. **Campo `status` en Task** (feature completa backend + frontend): enum `TaskStatus` (PENDIENTE/EN_PROGRESO/COMPLETADA), campo en la entidad, validación, y en Angular: selector, colores y filtros.
-3. **Acción de negocio** `POST /api/tasks/{id}/completar` (ejemplo de "verbo en la URL").
-4. **Docker**: Dockerfile para el backend (práctica de Docker, muy pedido en ofertas).
-5. **Librería de UI**: Angular Material o PrimeNG para botones/tablas.
+0. **✅ HECHO — Validación del título**: `@NotBlank` + `@Size` + `@Valid` → POST inválido devuelve **400** (verificado 5/5). Opcional pendiente: `@RestControllerAdvice` para que el 400 devuelva un mensaje limpio.
+1. **✅ HECHO — Editar tareas**: completo y probado por el usuario en el navegador.
+2. **🚧 EN CURSO — CALENDARIO tipo Google Calendar** (ver "ESTADO ACTUAL" arriba para el plan detallado):
+   - Elegido: **librería** (FullCalendar 7.1.3 recomendada) + **calendario arriba / lista del día debajo**
+   - **Siguiente acción del usuario**: escribir la FASE 1 (backend) — campo `dueDate` (`LocalDate`) en `Task`, `findByDueDateOrderByIdAsc` en el repositorio, y `fecha` opcional en `GET /api/tasks`
+   - Después: el agente actualiza los scripts de prueba y se instala FullCalendar
+3. **Campo `status` en Task**: enum `TaskStatus` (PENDIENTE/EN_PROGRESO/COMPLETADA) + selector/colores/filtros en Angular.
+4. **Acción de negocio** `POST /api/tasks/{id}/completar` (ejemplo de "verbo en la URL").
+5. **Docker**: Dockerfile para el backend (práctica muy pedida en ofertas).
+6. **Librería de UI**: PrimeNG o Angular Material para botones/tablas (PrimeNG 22.1.2 y Material 22.2.3 ya verificados compatibles con Angular 22).
 
 **Recordatorio de flujo de trabajo en cada sesión:**
 - Guardar los archivos (`Ctrl+S`) → el agente lee el disco
@@ -202,6 +208,18 @@ ng serve
 ---
 
 ## 📜 HISTORIAL DE SESIONES
+
+### Sesión 7 — 2026-10-08 (misma jornada, continuación)
+- **Bug de validación verificado**: `tools/test-validacion.js` → **5/5 OK** (sin title → 400 · `""` → 400 · `"   "` → 400 · válido → 201 · 250 chars → 400). Antes daba 500.
+  - Se explicó el `@Valid` como "interruptor" de la validación declarativa y la diferencia `@NotNull` / `@NotEmpty` / `@NotBlank`
+  - El mensaje del 400 sigue siendo genérico (*"Validation failed for object='task'. Error count: 1"*): el usuario decidió **dejar para después** el `@RestControllerAdvice`
+- **✅ Editar tareas COMPLETADO por el usuario y probado en el navegador** ("todo funciona bien"): signals `idEditando`/`tituloEditando`, métodos `empezarEdicion`/`cancelarEdicion`/`guardarEdicion` (con spread `{ ...tarea, title: titulo }` y `lista.map()`), y el HTML con `@if (idEditando() === tarea.id)` + botones ✏️/💾/✖ y atajos Enter/Escape
+- **Commit `06476ed`** (Swagger + validación + scripts) hecho y pusheado; la edición de tareas queda **sin commitear**
+- **Nueva feature pedida: CALENDARIO tipo Google Calendar** (pulsar una fecha para añadir tareas de ese día):
+  - El usuario eligió **usar una librería** y **calendario arriba + lista del día seleccionado debajo**
+  - El agente **verificó compatibilidad con Angular 22 vía npm**: FullCalendar **7.1.3** (peer Angular 16-22, recomendada), PrimeNG **22.1.2**, Angular Material **22.2.3**
+  - Se entregó el plan: FASE 1 backend (campo `LocalDate dueDate` + `findByDueDateOrderByIdAsc` + `GET /api/tasks?fecha=`) y FASE 2 frontend (FullCalendar + componente de calendario)
+- **Se fue a descansar** antes de escribir la FASE 1 del calendario
 
 ### Sesión 6 — 2026-10-08 (continuación del mismo día)
 - **Swagger añadido al backend** por el usuario: `springdoc-openapi-starter-webmvc-ui` **3.1.1**
