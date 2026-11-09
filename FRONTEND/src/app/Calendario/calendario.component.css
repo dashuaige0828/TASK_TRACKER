@@ -1,0 +1,54 @@
+.panel {
+  margin-bottom: 1.5rem;
+}
+
+h2 {
+  margin: 0 0 1rem;
+}
+
+h3 {
+  margin: 0 0 0.75rem;
+}
+
+.fila {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.fila input {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.fila button,
+.tareas button {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.mensaje {
+  color: #b00020;
+  font-weight: 600;
+}
+
+.tareas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tareas li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.tareas .vacio,
+.pista {
+  color: #666;
+  font-style: italic;
+}

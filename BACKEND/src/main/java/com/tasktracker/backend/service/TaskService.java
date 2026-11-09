@@ -5,6 +5,7 @@ import com.tasktracker.backend.model.Task;
 import com.tasktracker.backend.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,8 +18,11 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-    public List<Task> listarTareas() {
-        return taskRepository.findAll();
+    public List<Task> listarTareas(LocalDate fecha) {
+        if (fecha == null) {
+            return taskRepository.findAll();
+        }
+        return taskRepository.findByDueDateOrderByIdAsc(fecha);
     }
 
     public Optional<Task> obtenerTarea(Long id) {
@@ -38,6 +42,7 @@ public class TaskService {
         return taskRepository.findById(id).map(task -> {
             task.setTitle(datos.getTitle());
             task.setDescription(datos.getDescription());
+            task.setDueDate(datos.getDueDate());
             return taskRepository.save(task);
         });
     }

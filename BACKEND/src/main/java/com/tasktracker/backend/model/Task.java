@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 @Entity
 public class Task {
     public Task(){}
@@ -20,6 +22,9 @@ public class Task {
     @Column
     private String description;
 
+    @Column
+    private LocalDate dueDate;
+
     public Long getId() {
         return id;
     }
@@ -32,6 +37,10 @@ public class Task {
         return description;
     }
 
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -42,5 +51,9 @@ public class Task {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 }

@@ -1,0 +1,37 @@
+<div class="panel">
+  <h2>🗓️ Mi Calendario</h2>
+  <full-calendar [options]="calendarOptions" [events]="eventos()"></full-calendar>
+</div>
+
+<div class="panel">
+  @if (diaSeleccionado()) {
+    <h3>📅 Tareas del {{ diaSeleccionado() }}</h3>
+
+    <div class="fila">
+      <input
+        [value]="titulo()"
+        (input)="alEscribir($event)"
+        placeholder="Nueva tarea para este día..."
+        (keyup.enter)="crear()"
+      />
+      <button (click)="crear()">Agregar</button>
+    </div>
+
+    @if (mensaje()) {
+      <p class="mensaje">{{ mensaje() }}</p>
+    }
+
+    <ul class="tareas">
+      @for (t of tareasDelDia(); track t.id) {
+        <li>
+          {{ t.title }}
+          <button (click)="eliminar(t.id!)">🗑️</button>
+        </li>
+      } @empty {
+        <li class="vacio">No hay tareas este día</li>
+      }
+    </ul>
+  } @else {
+    <p class="pista">👆 Haz clic en un día del calendario para ver o añadir tareas</p>
+  }
+</div>

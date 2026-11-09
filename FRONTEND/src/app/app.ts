@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { TaskComponent } from './Task/task.component';
+import { CalendarioComponent } from './Calendario/calendario.component';
 
 @Component({
   selector: 'app-root',
-  imports: [TaskComponent],
+  imports: [CalendarioComponent],
   templateUrl: './app.html',
 })
 export class App {}
