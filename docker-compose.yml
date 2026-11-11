@@ -1,0 +1,12 @@
+# ============================================================
+#  Docker Compose — levanta el backend del Task Tracker
+#  Uso:  docker compose up --build     (desde F:\TASK_TRACKER)
+#        docker compose down
+# ============================================================
+services:
+  backend:
+    build: ./BACKEND
+    container_name: task-tracker-backend
+    ports:
+      - "8081:8080"          # puerto_host:puerto_contenedor (8080 está ocupado por WordPress)
+    restart: unless-stopped

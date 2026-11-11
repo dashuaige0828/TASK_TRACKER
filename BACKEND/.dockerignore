@@ -1,0 +1,6 @@
+# Archivos que NO se envían al construir la imagen
+target/
+.git/
+.idea/
+*.log
+run.log
