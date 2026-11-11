@@ -4,8 +4,15 @@ import dayGridPlugin from '@fullcalendar/angular/daygrid';
 import interactionPlugin from '@fullcalendar/angular/interaction';
 import themePlugin from '@fullcalendar/angular/themes/monarch';
 import esLocale from 'fullcalendar/locales/es';
-import { Task } from '../Task/task.model';
+import { Task, TaskStatus } from '../Task/task.model';
 import { TaskService } from '../Task/task.service';
+
+/** Color de cada estado (los mismos que usa la leyenda del HTML). */
+const COLOR_ESTADO: Record<TaskStatus, string> = {
+  PENDIENTE: '#2563eb',    // azul
+  EN_PROGRESO: '#f59e0b',  // ámbar
+  COMPLETADA: '#16a34a',   // verde
+};
 
 @Component({
   selector: 'app-calendario',
@@ -36,8 +43,8 @@ export class CalendarioComponent {
         title: t.title,
         start: t.dueDate!,
         allDay: true,
-        color: '#2563eb',          // 🎨 color de fondo de la tarea (azul)
-        contrastColor: '#ffffff',  // color del texto sobre la tarea
+        color: COLOR_ESTADO[t.status ?? 'PENDIENTE'],   // 🎨 color según estado
+        contrastColor: '#ffffff',
       }))
   );
 
@@ -86,6 +93,19 @@ export class CalendarioComponent {
         this.cargar();                       // recarga para actualizar el calendario
       },
       error: (e) => this.mensaje.set(e.error?.message ?? 'Error al crear'),
+    });
+  }
+
+  /** Se dispara al cambiar el <select> de estado de una tarea. */
+  alCambiarEstado(id: number, evento: Event) {
+    const select = evento.target as HTMLSelectElement;
+    this.cambiarEstado(id, select.value as TaskStatus);
+  }
+
+  cambiarEstado(id: number, estado: TaskStatus) {
+    this.taskService.cambiarEstado(id, estado).subscribe({
+      next: () => this.cargar(),
+      error: () => this.mensaje.set('Error al cambiar el estado'),
     });
   }
 

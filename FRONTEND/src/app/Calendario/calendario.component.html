@@ -21,10 +21,26 @@
       <p class="mensaje">{{ mensaje() }}</p>
     }
 
+    <div class="leyenda">
+      <span><i class="c-pendiente"></i> Pendiente</span>
+      <span><i class="c-progreso"></i> En progreso</span>
+      <span><i class="c-completada"></i> Completada</span>
+    </div>
+
     <ul class="tareas">
       @for (t of tareasDelDia(); track t.id) {
-        <li>
-          {{ t.title }}
+        <li [class.completada]="t.status === 'COMPLETADA'">
+          <span class="titulo">{{ t.title }}</span>
+
+          <select
+            [value]="t.status ?? 'PENDIENTE'"
+            (change)="alCambiarEstado(t.id!, $event)"
+          >
+            <option value="PENDIENTE">⭕ Pendiente</option>
+            <option value="EN_PROGRESO">🟡 En progreso</option>
+            <option value="COMPLETADA">✅ Completada</option>
+          </select>
+
           <button (click)="eliminar(t.id!)">🗑️</button>
         </li>
       } @empty {

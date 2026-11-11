@@ -2,6 +2,7 @@ package com.tasktracker.backend.service;
 
 import com.tasktracker.backend.exception.DuplicateTitleException;
 import com.tasktracker.backend.model.Task;
+import com.tasktracker.backend.model.TaskStatus;
 import com.tasktracker.backend.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,9 @@ public class TaskService {
             throw new DuplicateTitleException("Ya existe una tarea con el título: " + titulo);
         }
         task.setTitle(titulo);
+        if (task.getStatus() == null) {
+            task.setStatus(TaskStatus.PENDIENTE);
+        }
         return taskRepository.save(task);
     }
 
@@ -43,6 +47,17 @@ public class TaskService {
             task.setTitle(datos.getTitle());
             task.setDescription(datos.getDescription());
             task.setDueDate(datos.getDueDate());
+            // Si el cliente no envía estado, se conserva el actual
+            if (datos.getStatus() != null) {
+                task.setStatus(datos.getStatus());
+            }
+            return taskRepository.save(task);
+        });
+    }
+
+    public Optional<Task> cambiarEstado(Long id, TaskStatus estado) {
+        return taskRepository.findById(id).map(task -> {
+            task.setStatus(estado);
             return taskRepository.save(task);
         });
     }

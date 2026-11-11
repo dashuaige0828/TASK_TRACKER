@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Task } from './task.model';
+import { Task, TaskStatus } from './task.model';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -19,6 +19,10 @@ export class TaskService {
 
   actualizar(id: number, task: Task): Observable<Task> {
     return this.http.put<Task>(`${this.apiUrl}/${id}`, task);
+  }
+
+  cambiarEstado(id: number, estado: TaskStatus): Observable<Task> {
+    return this.http.put<Task>(`${this.apiUrl}/${id}/estado?estado=${estado}`, {});
   }
 
   eliminar(id: number): Observable<void> {

@@ -1,6 +1,7 @@
 package com.tasktracker.backend.controller;
 
 import com.tasktracker.backend.model.Task;
+import com.tasktracker.backend.model.TaskStatus;
 import com.tasktracker.backend.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -44,6 +45,15 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<Task> actualizar(@PathVariable Long id, @Valid @RequestBody Task datos) {
         return taskService.actualizarTarea(id, datos)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** Cambiar solo el estado: PUT /api/tasks/{id}/estado?estado=COMPLETADA */
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Task> cambiarEstado(@PathVariable Long id,
+                                              @RequestParam TaskStatus estado) {
+        return taskService.cambiarEstado(id, estado)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

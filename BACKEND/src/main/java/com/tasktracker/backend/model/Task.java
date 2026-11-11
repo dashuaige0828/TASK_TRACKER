@@ -25,6 +25,10 @@ public class Task {
     @Column
     private LocalDate dueDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TaskStatus status;
+
     public Long getId() {
         return id;
     }
@@ -41,6 +45,10 @@ public class Task {
         return dueDate;
     }
 
+    public TaskStatus getStatus() {
+        return status;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -55,5 +63,9 @@ public class Task {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
     }
 }
