@@ -21,3 +21,6 @@ Thumbs.db
 
 # Descargas temporales
 /tmp/
+
+# Notas internas del proyecto (no se publican)
+MEMORIA_DEL_PROYECTO.md

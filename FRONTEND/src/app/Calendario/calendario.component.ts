@@ -36,6 +36,8 @@ export class CalendarioComponent {
         title: t.title,
         start: t.dueDate!,
         allDay: true,
+        color: '#2563eb',          // 🎨 color de fondo de la tarea (azul)
+        contrastColor: '#ffffff',  // color del texto sobre la tarea
       }))
   );
 
